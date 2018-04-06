@@ -117,16 +117,24 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
  */
 createReviewHTML = (review) => {
   const li = document.createElement('li');
-  const name = document.createElement('p');
+  li.className = "reviewItem";
+  const reviewHeader = document.createElement('span');
+  reviewHeader.className = "reviewHeader";
+
+  const name = document.createElement('span');
   name.innerHTML = review.name;
-  li.appendChild(name);
+  name.className = "reviewerName";
+  reviewHeader.appendChild(name);
 
-  const date = document.createElement('p');
+  const date = document.createElement('span');
   date.innerHTML = review.date;
-  li.appendChild(date);
+  date.className = "reviewDate";
+  reviewHeader.appendChild(date);
+  li.appendChild(reviewHeader);
 
-  const rating = document.createElement('p');
+  const rating = document.createElement('span');
   rating.innerHTML = `Rating: ${review.rating}`;
+  rating.className = "reviewRating";
   li.appendChild(rating);
 
   const comments = document.createElement('p');
@@ -156,7 +164,7 @@ getParameterByName = (name, url) => {
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
     results = regex.exec(url);
   if (!results)
-    return null;
+    return null;9
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
