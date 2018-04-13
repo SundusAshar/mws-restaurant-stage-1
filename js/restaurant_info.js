@@ -56,9 +56,9 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
   address.innerHTML = restaurant.address;
 
   const image = document.getElementById('restaurant-img');
-  image.className = 'restaurant-img'
+  image.className = 'restaurant-img';
+  image.alt = restaurant.name + ' ' + 'Restaurant'; 
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
-  image.alt = restaurant.name + ' ' + 'Restaurant Image';
 
   const cuisine = document.getElementById('restaurant-cuisine');
   cuisine.innerHTML = restaurant.cuisine_type;
@@ -96,8 +96,9 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
  */
 fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h2');
+  const title = document.createElement('h3');
   title.innerHTML = 'Reviews';
+  title.tabIndex = '0';
   container.appendChild(title);
 
   if (!reviews) {
@@ -125,21 +126,25 @@ createReviewHTML = (review) => {
   const name = document.createElement('span');
   name.innerHTML = review.name;
   name.className = "reviewerName";
+  name.tabIndex = '0';
   reviewHeader.appendChild(name);
 
   const date = document.createElement('span');
   date.innerHTML = review.date;
   date.className = "reviewDate";
+  date.tabIndex = '0';
   reviewHeader.appendChild(date);
   li.appendChild(reviewHeader);
 
   const rating = document.createElement('span');
   rating.innerHTML = `Rating: ${review.rating}`;
   rating.className = "reviewRating";
+  rating.tabIndex = '0';
   li.appendChild(rating);
 
   const comments = document.createElement('p');
   comments.innerHTML = review.comments;
+  comments.tabIndex = '0';
   li.appendChild(comments);
 
   return li;
@@ -152,6 +157,8 @@ fillBreadcrumb = (restaurant=self.restaurant) => {
   const breadcrumb = document.getElementById('breadcrumb');
   const li = document.createElement('li');
   li.innerHTML = restaurant.name;
+  li.tabIndex = '0';
+  li.setAttribute('aria-current', 'page');
   breadcrumb.appendChild(li);
 }
 
@@ -170,3 +177,4 @@ getParameterByName = (name, url) => {
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
+// Register service worker here 
