@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
   fetchNeighborhoods();
   fetchCuisines();
   registerServiceWorker();
+  DBHelper.dataFromAPI();
 });
 
 /**
