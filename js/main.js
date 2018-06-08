@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', (event) => {
   fetchCuisines();
   registerServiceWorker();
   DBHelper.dataFromAPI();
+  
 });
 
 /**
@@ -142,7 +143,8 @@ createRestaurantHTML = (restaurant) => {
 
   const image = document.createElement('img');
   image.className = 'restaurant-img';
-  image.src = DBHelper.imageUrlForRestaurant(restaurant);
+  image.src = './img/placeholder.png';
+  image.setAttribute("data-src", DBHelper.imageUrlForRestaurant(restaurant));
   image.alt = restaurant.name +' ' + 'Restaurant';
   li.append(image);
 
@@ -192,3 +194,7 @@ addMarkersToMap = (restaurants = self.restaurants) => {
     console.log('Service Worker Registered!'));
    }
  };
+
+ 
+
+ 

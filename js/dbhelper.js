@@ -206,7 +206,7 @@ class DBHelper {
   static imageUrlForRestaurant(restaurant) {
     if(!restaurant.photograph)
     restaurant.photograph = 10;
-    return (`/img/${restaurant.photograph}.jpg`);
+    return (`/img/${restaurant.photograph}.webp`);
   }
 
   /**
