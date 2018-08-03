@@ -1,3 +1,5 @@
+const port = 1337
+
 /**
  * Common database helper functions.
  */
@@ -8,28 +10,51 @@ class DBHelper {
    * Change this to restaurants.json file location on your server.
    */
   static get DATABASE_URL() {
-    const port = 1337 // Change this to your server port
+    //const port = 1337 // Change this to your server port
     return `http://localhost:${port}/restaurants`;
     //return `http://localhost:${port}/data/restaurants.json`;
   }
 
+  static get REVIEWS_URL() {
+    return `http://localhost:${port}/reviews?restaurant_id=`;
+    //return `http://localhost:${port}/reviews`;
+  }
+
+  static get POST_REVIEWS_URL() {
+    return `http://localhost:${port}/reviews`;
+  }
   /**
-   * Fetch Data from API and add to IDB
+   * Fetch Restaurants from API and add to IDB
    */
-  static dataFromAPI(){
+  static restaurantsFromAPI(){
     return fetch(DBHelper.DATABASE_URL)
     .then(resp => resp.json())
-    .then(fdata => {
-      console.log(fdata);
-      DBHelper.addDatatoIDB(fdata);
-      return fdata;
+    .then(resdata => {
+      DBHelper.addRestaurantstoIDB(resdata);
+      return resdata;
+    });
+  }
+
+  /**
+   * Fetch Reviews from API and add to IDB
+   */
+
+  static reviewsFromAPI(rid){
+    return fetch(`${DBHelper.REVIEWS_URL}${rid}`)
+    //return fetch(DBHelper.REVIEWS_URL)
+    .then(resp => resp.json())
+    .then(revdata => {
+      console.log("TX=",DBHelper.addReviewstoIDB(revdata));
+      console.log(revdata);
+      DBHelper.addReviewstoIDB(revdata)
+      return revdata;
     });
   }
 
   /**
    * Create IDB
    */
-
+ 
    static openIdb(){
      return idb.open('mws-restaurant', 1, upgradeDB => {
        if(!upgradeDB.objectStoreNames.contains('restaurants')){
@@ -37,13 +62,17 @@ class DBHelper {
            keyPath: 'id'
          });
        }
+       if(!upgradeDB.objectStoreNames.contains('reviews')) {
+         const revStore = upgradeDB.createObjectStore('reviews', {keyPath: 'id'});
+         revStore.createIndex('restaurant_id', 'restaurant_id', {unique: false});
+       }
      });
    }
 
    /**
-    * Add Data to IDB
+    * Add Restaurants Data to IDB
     */
-   static addDatatoIDB(jdata){
+   static addRestaurantstoIDB(jdata){
     return DBHelper.openIdb().then(db => {
       if(!db)
       return;
@@ -53,28 +82,61 @@ class DBHelper {
       return tx.complete;
     });
   }
+/**
+ * Add Reviews to IDB
+ */
+  static addReviewstoIDB(jdata){
+    return DBHelper.openIdb().then(db => {
+      if(!db)
+      return;
+      const tx = db.transaction('reviews', 'readwrite');
+      const store = tx.objectStore('reviews');
+      jdata.forEach(element => store.put(element));
+      console.log("Reviews stored");
+      return tx.complete;
+    });
+  }
+
 
   /**
-   * Read Data from IDB
+   * Read Restaurant Data from IDB
    */
-   static readIDB(){
+   static restaurantsFromIDB(){
     return DBHelper.openIdb().then(db => {
       if(!db)
       return;
       const tx = db.transaction('restaurants', 'readonly');
       const store = tx.objectStore('restaurants');
       if(store.length == 0){
-        DBHelper.dataFromAPI();
+        DBHelper.restaurantsFromAPI();
       }
       return store.getAll();
     });
   }
 
   /**
+   * Read Reviews from IDB
+   */
+
+  /*static reviewsFromIDB(){
+    return DBHelper.openIdb().then(db => {
+      if(!db)
+      return;
+      const tx = db.transaction('reviews', 'readonly');
+      const revStore = tx.objectStore('reviews');
+      const index = revStore.index('restaurant_id')
+      if(store.length == 0){
+        DBHelper.reviewsFromAPI();
+      }
+      return index.getAll();
+    });
+  }*/
+  
+  /**
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    DBHelper.readIDB().then(allrestaurants => {
+    DBHelper.restaurantsFromIDB().then(allrestaurants => {
       console.log(allrestaurants);
         return allrestaurants;
     }).then(restaurants => {
@@ -84,6 +146,22 @@ class DBHelper {
       callback(error, null);
     });
   }
+
+  /**
+   * Fetch all Reviews
+   */
+
+  /*static fetchReviews(callback) {
+    DBHelper.reviewsFromIDB().then(allreviews => {
+      console.log(allreviews);
+        return allreviews;
+    }).then(reviews => {
+      callback(null, reviews);
+    }).catch(error => {
+      console.log(error);
+      callback(error, null);
+    });
+  }*/
 
   /**
    * Fetch a restaurant by its ID.
@@ -104,6 +182,41 @@ class DBHelper {
     });
   }
 
+  /**
+   * Fetch Reviews by ID
+   */
+  /*static fetchReviewsByResturantId(id, callback) {
+    // fetch all restaurants with proper error handling.
+    DBHelper.fetchReviews((error, reviews) => {
+      if (error) {
+        callback(error, null);
+      } else {
+        const review = reviews.find(r => r.restaurant_id == id);
+        if (review) {
+          console.log(id);
+          console.log(r.restaurant_id) // Got the restaurant
+          callback(null, review);
+        } else { // Reviews does not exist in the database
+          callback('Reviews do not exist', null);
+        }
+      }
+    });
+  }
+  static fetchReviewsById(id, callback) {
+    // fetch all restaurants with proper error handling.
+    DBHelper.fetchReviews((error, reviews) => {
+      if (error) {
+        callback(error, null);
+      } else {
+        const review = reviews.find(r => r.id == id);
+        if (review) {console.log(id); // Got the restaurant
+          callback(null, review);
+        } else { // Reviews does not exist in the database
+          callback('Reviews do not exist', null);
+        }
+      }
+    });
+  }*/
   /**
    * Fetch restaurants by a cuisine type with proper error handling.
    */

@@ -1,4 +1,5 @@
 let restaurant;
+//let reviews;
 var map;
 
 
@@ -63,7 +64,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
 
   const image = document.getElementById('restaurant-img');
   image.className = 'restaurant-img';
-  image.alt = restaurant.name + ' ' + 'Restaurant'; 
+  image.alt = restaurant.name + ' ' + 'Restaurant';
   image.src = DBHelper.imageUrlForRestaurant(restaurant);
 
   const cuisine = document.getElementById('restaurant-cuisine');
@@ -74,7 +75,9 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
     fillRestaurantHoursHTML();
   }
   // fill reviews
-  fillReviewsHTML();
+  //fillReviewsHTML();
+  restaurantReviews();
+
 }
 
 /**
@@ -97,10 +100,38 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
   }
 }
 
+restaurantReviews = () => {
+  return DBHelper.openIdb().then(db => {
+    if (!db)
+      return;
+    const tx = db.transaction('reviews', 'readonly');
+    const revStore = tx.objectStore('reviews');
+    var resp = DBHelper.reviewsFromAPI(self.restaurant.id).then(
+      resp => {
+        console.log(resp);
+        if (resp) {
+          fillReviewsHTML(resp)
+        } else {
+          var index = revStore.index('restaurant_id').getAll(self.restaurant.id);
+          index.then(allReviews => {
+            /*if(allReviews == 0){
+              
+            }*/
+            fillReviewsHTML(allReviews)
+          })
+        }
+      }
+    );
+
+  });
+}
+    
+ 
+
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+fillReviewsHTML = (reviews) => {
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h3');
   title.innerHTML = 'Reviews';
@@ -108,11 +139,14 @@ fillReviewsHTML = (reviews = self.restaurant.reviews) => {
   container.appendChild(title);
 
   if (!reviews) {
+    //DBHelper.fetchReviewsByResturantId(id = self.restaurant.id, (error, reviews));
+
     const noReviews = document.createElement('p');
     noReviews.innerHTML = 'No reviews yet!';
     container.appendChild(noReviews);
     return;
   }
+
   const ul = document.getElementById('reviews-list');
   reviews.forEach(review => {
     ul.appendChild(createReviewHTML(review));
@@ -156,10 +190,40 @@ createReviewHTML = (review) => {
   return li;
 }
 
+document.getElementById("btnSave").addEventListener("click", () => {
+  let newReview = {
+    restaurant_id: self.restaurant.id,
+    name: document.getElementById("rname").value,
+    rating: document.getElementById("rrating").value,
+    comments: document.getElementById("rcomments").value
+  }
+  postReview(newReview);
+})
+
+postReview = (newReview) => {
+  const header = new Headers({ 'Content-Type': 'application/json' });
+  const data = JSON.stringify(newReview);
+  return fetch(DBHelper.POST_REVIEWS_URL, {
+    method: 'POST',
+    headers: header,
+    body: data
+  })
+    .then(() => {
+      console.log("Submitted");
+      console.log(data);
+      return Promise.resolve();
+    })
+    .catch(() => {
+      console.log("Not"); //offline
+      return Promise.resolve();
+    });
+}
+
+
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
-fillBreadcrumb = (restaurant=self.restaurant) => {
+fillBreadcrumb = (restaurant = self.restaurant) => {
   const breadcrumb = document.getElementById('breadcrumb');
   const li = document.createElement('li');
   li.innerHTML = restaurant.name;
@@ -178,15 +242,15 @@ getParameterByName = (name, url) => {
   const regex = new RegExp(`[?&]${name}(=([^&#]*)|&|#|$)`),
     results = regex.exec(url);
   if (!results)
-    return null;9
+    return null; 9
   if (!results[2])
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 // Register service worker here 
 registerServiceWorker = () => {
-  if(navigator.serviceWorker){
-    navigator.serviceWorker.register('sw.js').then (() => 
-   console.log('Service Worker Registered!'));
+  if (navigator.serviceWorker) {
+    navigator.serviceWorker.register('sw.js').then(() =>
+      console.log('Service Worker Registered!'));
   }
 };

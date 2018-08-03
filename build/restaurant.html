@@ -75,7 +75,24 @@
     <!-- end restaurant -->
     <!-- Beginning reviews -->
     <section id="reviews-container">
-      <ul id="reviews-list"></ul>
+      <div id="rlist">
+          <ul id="reviews-list"></ul>
+      </div>
+      <div id="revform">
+          <form class="rform">
+              <fieldset class="reviewbox">
+                <legend>Review this Restaurant</legend>
+                Your Name:<br>
+                <input type="text" id="rname" required><br>
+                Rating: <br>
+                <input type="text" id="rrating"><br>
+                Your Comments:<br>
+                <textarea name="comments" id="rcomments" rows="5" cols="20" placeholder="Enter your comments here"></textarea><br><br>
+                <input type="button" id="btnSave" value="Submit">
+              </fieldset>
+            </form>
+      </div>
+
     </section>
     <!-- End reviews -->
   </main>
