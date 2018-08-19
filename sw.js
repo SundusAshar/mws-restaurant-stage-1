@@ -1,4 +1,4 @@
-const mwsCache = 'mws-rStage1-v27';
+const mwsCache = 'mws-rStage1-v30';
 const cacheContent = [
     '/',
     '/js/main.js',

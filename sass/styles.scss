@@ -165,7 +165,7 @@ nav h1 a {
   text-align: left;*/
   width: 270px;
   margin: 15px auto;
-  padding: 25px 30px 25px; }
+  padding: 5px 30px 25px; }
 
 #restaurants-list .restaurant-img {
   background-color: #ccc;
@@ -201,6 +201,26 @@ nav h1 a {
   text-align: center;
   text-decoration: none;
   text-transform: uppercase; }
+
+  .favicon {
+    float: right;
+    background-color:transparent;
+    font-size: 24pt;
+    border: none;
+    color:red;
+    cursor: pointer;
+    min-height: 45px;
+  }
+  .notFavicon {
+    float: right;
+    background-color:transparent;
+    font-size: 24pt;
+    border: none;
+    color:silver;
+    cursor: pointer;
+
+    min-height: 45px;
+  }
 
 /* ====================== Restaurant Details ====================== */
 .inside header {
@@ -305,6 +325,15 @@ nav h1 a {
   font-size: 18pt;
   padding: 10px 20px 20px 0px;
   margin-bottom: 20px; }
+
+  .reviewHeader {
+    width: 100%;
+    background-color: #252831;
+    display: inline-block;
+    color: #aaa;
+    font-size: 18pt;
+    padding: 10px 20px 20px 0px;
+    margin-bottom: 20px; }
 
 .reviewerName {
   padding-left: 40px; }

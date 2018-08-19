@@ -202,6 +202,27 @@ nav h1 a {
   text-decoration: none;
   text-transform: uppercase; }
 
+  .favicon {
+    background-color:transparent;
+    font-size: 16pt;
+    border: none;
+    color:maroon;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    display: inline-block;
+  }
+  .notFavicon {
+    background-color:transparent;
+    font-size: 16pt;
+    border: none;
+    color:grey;
+    cursor: pointer;
+    display: inline-block;
+    text-align: center;
+    display: inline-block;
+  }
+
 /* ====================== Restaurant Details ====================== */
 .inside header {
   position: fixed;

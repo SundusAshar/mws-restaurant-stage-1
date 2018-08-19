@@ -23,7 +23,7 @@ gulp.task('styles', function(done) {
         browsers: ['last 2 versions']
     }))
     .pipe(gulp.dest('build/css'))
-    .pipe(browserSync.stream());
+    /*.pipe(browserSync.stream());*/
     done();
 });
 
@@ -102,7 +102,7 @@ gulp.task('build', gulp.parallel('copy-html', 'compImages', 'styles', 'scripts',
 gulp.task('default',  gulp.parallel('copy-html', 'compImages', 'styles', 'build', function(done){
     gulp.watch('sass/**/*.scss', gulp.parallel('styles'));
     gulp.watch('/index.html', gulp.parallel('copy-html'));
-    gulp.watch('./build/index.html').on('change', browserSync.reload);
+   // gulp.watch('./build/index.html').on('change', browserSync.reload);
     //gulp.watch('js/**/*.js', gulp.series('lint'));
 
     browserSync.init({

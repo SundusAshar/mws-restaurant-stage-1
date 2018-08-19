@@ -2,16 +2,20 @@ let restaurant;
 //let reviews;
 var map;
 
-
-
 document.addEventListener('DOMContentLoaded', (event) => {
   registerServiceWorker();
+  
+  //TODO: Timer to trigger map
 });
+
 
 /**
  * Initialize Google map, called from HTML.
  */
+
+
 window.initMap = () => {
+  console.log("Map initialised");
   fetchRestaurantFromURL((error, restaurant) => {
     if (error) { // Got an error!
       console.error(error);
@@ -99,14 +103,47 @@ fillRestaurantHoursHTML = (operatingHours = self.restaurant.operating_hours) => 
     hours.appendChild(row);
   }
 }
+restaurantReviews = () => {
 
+  var resp = DBHelper.reviewsFromAPI(self.restaurant.id).then(
+    resp => {
+    
+      if (resp) {
+        console.log("Found Reviews Online", resp);
+        fillReviewsHTML(resp)
+      } else {
+
+        return DBHelper.openIdb().then(db => {
+          if (!db)
+            return;
+          const tx = db.transaction('reviews', 'readonly');
+          const revStore = tx.objectStore('reviews');
+        var index = revStore.index('restaurant_id').getAll(self.restaurant.id);
+        index.then(allReviews => {
+          console.log("Found Reviews IDB", allReviews);
+          let pendingReviews = JSON.parse(localStorage.getItem('OfflineReviews'));
+          if (pendingReviews){
+            allReviews.concat(pendingReviews);
+            console.log("Appending Pending Reviews ", allReviews);
+          }
+          
+          fillReviewsHTML(allReviews)
+          
+        })
+      });
+    }
+  }
+  );
+  
+}
+/*
 restaurantReviews = () => {
   return DBHelper.openIdb().then(db => {
     if (!db)
       return;
     const tx = db.transaction('reviews', 'readonly');
     const revStore = tx.objectStore('reviews');
-    var resp = DBHelper.reviewsFromAPI(self.restaurant.id).then(
+      var resp = DBHelper.reviewsFromAPI(self.restaurant.id).then(
       resp => {
         console.log(resp);
         if (resp) {
@@ -116,7 +153,7 @@ restaurantReviews = () => {
           index.then(allReviews => {
             /*if(allReviews == 0){
               
-            }*/
+            }* /
             fillReviewsHTML(allReviews)
           })
         }
@@ -124,18 +161,19 @@ restaurantReviews = () => {
     );
 
   });
-}
+}*/
     
  
 
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews) => {
+fillReviewsHTML = (reviews,isPending) => {
   const container = document.getElementById('reviews-container');
   const title = document.createElement('h3');
   title.innerHTML = 'Reviews';
   title.tabIndex = '0';
+ // container.innerHTML="";//RESET Previous reviews
   container.appendChild(title);
 
   if (!reviews) {
@@ -149,7 +187,7 @@ fillReviewsHTML = (reviews) => {
 
   const ul = document.getElementById('reviews-list');
   reviews.forEach(review => {
-    ul.appendChild(createReviewHTML(review));
+    ul.appendChild(createReviewHTML(review,isPending));
   });
   container.appendChild(ul);
 }
@@ -157,11 +195,16 @@ fillReviewsHTML = (reviews) => {
 /**
  * Create review HTML and add it to the webpage.
  */
-createReviewHTML = (review) => {
+createReviewHTML = (review,isPending) => {
   const li = document.createElement('li');
   li.className = "reviewItem";
   const reviewHeader = document.createElement('span');
-  reviewHeader.className = "reviewHeader";
+  if (isPending=='true'){
+    reviewHeader.className = "reviewHeaderPending";
+  } else {
+    reviewHeader.className = "reviewHeader";
+  }
+  
 
   const name = document.createElement('span');
   name.innerHTML = review.name;
@@ -170,7 +213,7 @@ createReviewHTML = (review) => {
   reviewHeader.appendChild(name);
 
   const date = document.createElement('span');
-  date.innerHTML = review.date;
+  date.innerHTML = new Date(review.createdAt).toDateString();
   date.className = "reviewDate";
   date.tabIndex = '0';
   reviewHeader.appendChild(date);
@@ -187,6 +230,7 @@ createReviewHTML = (review) => {
   comments.tabIndex = '0';
   li.appendChild(comments);
 
+
   return li;
 }
 
@@ -197,27 +241,11 @@ document.getElementById("btnSave").addEventListener("click", () => {
     rating: document.getElementById("rrating").value,
     comments: document.getElementById("rcomments").value
   }
-  postReview(newReview);
+  DBHelper.postReview(newReview).then(restaurantReviews());
+  ;
 })
 
-postReview = (newReview) => {
-  const header = new Headers({ 'Content-Type': 'application/json' });
-  const data = JSON.stringify(newReview);
-  return fetch(DBHelper.POST_REVIEWS_URL, {
-    method: 'POST',
-    headers: header,
-    body: data
-  })
-    .then(() => {
-      console.log("Submitted");
-      console.log(data);
-      return Promise.resolve();
-    })
-    .catch(() => {
-      console.log("Not"); //offline
-      return Promise.resolve();
-    });
-}
+
 
 
 /**
@@ -247,6 +275,7 @@ getParameterByName = (name, url) => {
     return '';
   return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
+
 // Register service worker here 
 registerServiceWorker = () => {
   if (navigator.serviceWorker) {

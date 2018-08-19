@@ -44,7 +44,7 @@ class DBHelper {
     //return fetch(DBHelper.REVIEWS_URL)
     .then(resp => resp.json())
     .then(revdata => {
-      console.log("TX=",DBHelper.addReviewstoIDB(revdata));
+     // console.log("TX=",DBHelper.addReviewstoIDB(revdata));
       console.log(revdata);
       DBHelper.addReviewstoIDB(revdata)
       return revdata;
@@ -92,12 +92,78 @@ class DBHelper {
       const tx = db.transaction('reviews', 'readwrite');
       const store = tx.objectStore('reviews');
       jdata.forEach(element => store.put(element));
-      console.log("Reviews stored");
+      console.log("Review stored",jdata);
       return tx.complete;
     });
   }
+static updateIsFav(restaurantID, isFav){
+  console.log("Updating Restaurant: "+ restaurantID + " for IsFav: "+ isFav );
+    return fetch(`${DBHelper.DATABASE_URL}/${restaurantID}/?is_favorite=${isFav}`,{method:'PUT'})
+  .then(
+    DBHelper.openIdb().then(db => {
+      if(!db)
+      return;
+      const tx = db.transaction('restaurants', 'readwrite');
+      const store = tx.objectStore('restaurants');
+      store.get(restaurantID).then(restaurant=>{
+        restaurant.is_favorite=isFav;
+        store.put(restaurant);
+      });
 
+      console.log("isFav stored",restaurantID,isFav);
+      return tx.complete;
+    })
+  );
+   
+}
 
+static keepReviewOffine(review){
+  var allOfflineReview = null;
+  allOfflineReview = localStorage.getItem('OfflineReviews');
+  if (allOfflineReview==null){
+    allOfflineReview=[];
+  } else {
+    allOfflineReview = JSON.parse(allOfflineReview);
+  }
+  allOfflineReview.push(review);
+  localStorage.setItem('OfflineReviews',JSON.stringify(allOfflineReview));
+  window.addEventListener('online',(event)=>{
+  console.log("Connectivity restored");
+  let pendingReviews = JSON.parse(localStorage.getItem('OfflineReviews'));
+  if (pendingReviews!=null){
+    localStorage.removeItem('OfflineReviews');
+    (pendingReviews).forEach(element => {
+      DBHelper.postReview(element);
+    });
+  }
+});
+}
+static postReview (newReview) {
+  console.log("Posting Review Submitted",newReview);
+  const header = new Headers({ 'Content-Type': 'application/json' });
+  const data = JSON.stringify(newReview);
+  if (navigator.onLine){
+ 
+  return fetch(DBHelper.POST_REVIEWS_URL, {
+    method: 'POST',
+    headers: header,
+    body: data
+  })
+    .then(() => {
+      console.log("Review Submitted Online",data);
+      
+      document.getElementById('rform').reset();
+      return Promise.resolve();
+    })
+    .catch(() => {
+      console.log("Not Submitted"); //offline
+      return Promise.resolve();
+    });
+  } else {
+    console.log("Review Stored Offline for later submission");
+    DBHelper.keepReviewOffine(newReview)
+  }
+}
   /**
    * Read Restaurant Data from IDB
    */
@@ -107,9 +173,9 @@ class DBHelper {
       return;
       const tx = db.transaction('restaurants', 'readonly');
       const store = tx.objectStore('restaurants');
-      if(store.length == 0){
+      /*if(store.length == 0){
         DBHelper.restaurantsFromAPI();
-      }
+      }*/
       return store.getAll();
     });
   }
@@ -136,15 +202,24 @@ class DBHelper {
    * Fetch all restaurants.
    */
   static fetchRestaurants(callback) {
-    DBHelper.restaurantsFromIDB().then(allrestaurants => {
-      console.log(allrestaurants);
-        return allrestaurants;
+    DBHelper.restaurantsFromAPI().then(allrestaurants=>{
+      return allrestaurants; 
     }).then(restaurants => {
       callback(null, restaurants);
     }).catch(error => {
       console.log(error);
-      callback(error, null);
-    });
+      DBHelper.restaurantsFromIDB().then(allrestaurants => {
+        //  console.log(allrestaurants);
+            return allrestaurants;
+        }).then(restaurants => {
+          callback(null, restaurants);
+        }).catch(error => {
+          console.log(error);
+          callback(error, null);
+        });
+      //callback(error, null);
+    });;
+
   }
 
   /**
@@ -335,5 +410,6 @@ class DBHelper {
     );
     return marker;
   }
+
 
 }

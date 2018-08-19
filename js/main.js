@@ -8,6 +8,15 @@ var markers = []
  * Fetch neighborhoods and cuisines as soon as the page is loaded.
  */
 document.addEventListener('DOMContentLoaded', (event) => {
+  /*
+  console.log("Onload called ...");
+  setTimeout(() => {
+    console.log("Container Updated");
+    const name = document.getElementById('map-container');
+  name.innerHTML ='<div id="map" role="application" aria-label="Location Map for Restaurants" tabindex="0"></div>';
+  }, 1500);
+  setTimeout(mapInit(), 3500);*/
+  
   fetchNeighborhoods();
   fetchCuisines();
   registerServiceWorker();
@@ -16,6 +25,20 @@ document.addEventListener('DOMContentLoaded', (event) => {
   
 });
 
+mapInit = () => {
+  let loc = {
+    lat: 40.722216,
+    lng: -73.987501
+  };
+  self.map = new google.maps.Map(document.getElementById('map'), {
+    zoom: 12,
+    center: loc,
+    scrollwheel: false
+  });
+  updateRestaurants();
+}
+/*
+*/
 /**
  * Fetch all neighborhoods and set their HTML.
  */
@@ -139,12 +162,49 @@ fillRestaurantsHTML = (restaurants = self.restaurants) => {
 /**
  * Create restaurant HTML.
  */
+setFavIcon = (favIcon)=>{
+  if(favIcon.value == `false`){
+    favIcon.innerHTML =`♥`;//'☆';// `♡`;
+    favIcon.className = 'notFavicon';
+    //favIcon.classList.remove('favicon');
+    //favIcon.classList.add('notFavicon');
+    favIcon.setAttribute('Aria-label', 'Mark as favorite restaurant')
+  }
+  else {
+    favIcon.innerHTML = `♥`;//'★'//`♥`;
+    favIcon.className = 'favicon';
+    //favIcon.classList.remove('notFavicon');
+    //favIcon.classList.add('favicon');
+    favIcon.setAttribute('Aria-label', 'Remove from favorite restaurants')
+  }
+}
 createRestaurantHTML = (restaurant) => {
   const li = document.createElement('li');
 
+  const favIcon = document.createElement('button');
+  
+  favIcon.value = restaurant.is_favorite;
+  
+  favIcon.onclick=function(){
+    console.log("Fav Button Clicked " + restaurant.is_favorite);
+    if (restaurant.is_favorite=='true'){
+      restaurant.is_favorite = 'false'  ;
+    } else {
+      restaurant.is_favorite = 'true'  ;
+    }
+    favIcon.value= restaurant.is_favorite;
+    
+    
+    setFavIcon(favIcon);
+    //const isFav = restaurant.is_favorite;
+    DBHelper.updateIsFav(restaurant.id, restaurant.is_favorite);
+  }
+  setFavIcon(favIcon);
+  li.appendChild(favIcon);
+  
   const image = document.createElement('img');
   image.className = 'restaurant-img';
-  image.src = './img/placeholder.png';
+  image.src = './img/placeholder.webp';
   image.setAttribute("data-src", DBHelper.imageUrlForRestaurant(restaurant));
   image.alt = restaurant.name +' ' + 'Restaurant';
   li.append(image);
