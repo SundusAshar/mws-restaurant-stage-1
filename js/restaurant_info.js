@@ -1,6 +1,6 @@
 let restaurant;
 //let reviews;
-var map;
+var newMap ;
 
 document.addEventListener('DOMContentLoaded', (event) => {
   registerServiceWorker();
@@ -8,7 +8,11 @@ document.addEventListener('DOMContentLoaded', (event) => {
   //TODO: Timer to trigger map
 });
 
-
+document.addEventListener('DOMContentLoaded', (event) => {
+  console.log("Map initialised");
+  initMap();
+  //TODO: Timer to trigger map
+});
 /**
  * Initialize Google map, called from HTML.
  */
@@ -16,6 +20,28 @@ document.addEventListener('DOMContentLoaded', (event) => {
 
 window.initMap = () => {
   console.log("Map initialised");
+  fetchRestaurantFromURL((error, restaurant) => {
+    if (error) { // Got an error!
+      console.error(error);
+    } else {      
+      self.newMap = L.map('map', {
+        center: [restaurant.latlng.lat, restaurant.latlng.lng],
+        zoom: 16,
+        scrollWheelZoom: false
+      });
+      L.tileLayer('https://api.tiles.mapbox.com/v4/{id}/{z}/{x}/{y}.jpg70?access_token=pk.eyJ1Ijoic3VuZHVzYXNoYXIiLCJhIjoiY2psMHRhODluMG40YTNxbnE5YW40cGp3eCJ9.B8mb_uWu1_QYOD8uqwNwfA', {
+        mapboxToken: '<your MAPBOX API KEY HERE>',
+        maxZoom: 18,
+        attribution: 'Map data &copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a> contributors, ' +
+          '<a href="https://creativecommons.org/licenses/by-sa/2.0/">CC-BY-SA</a>, ' +
+          'Imagery © <a href="https://www.mapbox.com/">Mapbox</a>',
+        id: 'mapbox.streets'    
+      }).addTo(newMap);
+      fillBreadcrumb();
+      DBHelper.mapMarkerForRestaurant(self.restaurant, self.newMap);
+    }
+  });
+  /*
   fetchRestaurantFromURL((error, restaurant) => {
     if (error) { // Got an error!
       console.error(error);
@@ -28,7 +54,7 @@ window.initMap = () => {
       fillBreadcrumb();
       DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
     }
-  });
+  });*/
 }
 
 /**
@@ -127,7 +153,7 @@ restaurantReviews = () => {
             console.log("Appending Pending Reviews ", allReviews);
           }
           
-          fillReviewsHTML(allReviews)
+          fillReviewsHTML(allReviews);
           
         })
       });
@@ -168,13 +194,19 @@ restaurantReviews = () => {
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews,isPending) => {
+fillReviewsHTML = (reviews,skipTitle) => {
+  console.log("fillReviewsHTML with reviews ",reviews," skiptitle", skipTitle);
   const container = document.getElementById('reviews-container');
-  const title = document.createElement('h3');
-  title.innerHTML = 'Reviews';
-  title.tabIndex = '0';
- // container.innerHTML="";//RESET Previous reviews
-  container.appendChild(title);
+  if (!skipTitle)
+  {
+    const title = document.createElement('h3');
+    title.innerHTML = 'Reviews';
+    title.tabIndex = '0';
+
+   // container.innerHTML="";//RESET Previous reviews
+    container.appendChild(title);
+  }
+
 
   if (!reviews) {
     //DBHelper.fetchReviewsByResturantId(id = self.restaurant.id, (error, reviews));
@@ -187,7 +219,7 @@ fillReviewsHTML = (reviews,isPending) => {
 
   const ul = document.getElementById('reviews-list');
   reviews.forEach(review => {
-    ul.appendChild(createReviewHTML(review,isPending));
+    ul.appendChild(createReviewHTML(review));
   });
   container.appendChild(ul);
 }
@@ -195,14 +227,15 @@ fillReviewsHTML = (reviews,isPending) => {
 /**
  * Create review HTML and add it to the webpage.
  */
-createReviewHTML = (review,isPending) => {
+createReviewHTML = (review) => {
   const li = document.createElement('li');
   li.className = "reviewItem";
   const reviewHeader = document.createElement('span');
-  if (isPending=='true'){
-    reviewHeader.className = "reviewHeaderPending";
+
+  if (review.id){
+    reviewHeader.className = "reviewHeader"; 
   } else {
-    reviewHeader.className = "reviewHeader";
+    reviewHeader.className = "reviewHeaderPending";
   }
   
 
@@ -213,7 +246,7 @@ createReviewHTML = (review,isPending) => {
   reviewHeader.appendChild(name);
 
   const date = document.createElement('span');
-  date.innerHTML = new Date(review.createdAt).toDateString();
+  date.innerHTML = new Date(review.createdAt?review.createdAt:new Date()).toDateString();
   date.className = "reviewDate";
   date.tabIndex = '0';
   reviewHeader.appendChild(date);
@@ -235,14 +268,23 @@ createReviewHTML = (review,isPending) => {
 }
 
 document.getElementById("btnSave").addEventListener("click", () => {
-  let newReview = {
-    restaurant_id: self.restaurant.id,
-    name: document.getElementById("rname").value,
-    rating: document.getElementById("rrating").value,
-    comments: document.getElementById("rcomments").value
+  if ((document.getElementById("rname").value != "") || (document.getElementById("rcomments").value != "") || (document.getElementById("rrating").value != ""))
+  {
+    let newReview = {
+      restaurant_id: self.restaurant.id,
+      name: document.getElementById("rname").value,
+      rating: document.getElementById("rrating").value,
+      comments: document.getElementById("rcomments").value
+    }
+    let newArr = [];
+  
+    newArr.push(newReview);
+    DBHelper.postReview(newReview).then(fillReviewsHTML(newArr,true));
+    ;
+  } else {
+    alert("All fields are required");
   }
-  DBHelper.postReview(newReview).then(restaurantReviews());
-  ;
+  
 })
 
 
