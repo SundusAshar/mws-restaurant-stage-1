@@ -3,7 +3,7 @@ let restaurant;
 var newMap ;
 
 document.addEventListener('DOMContentLoaded', (event) => {
-  registerServiceWorker();
+  //registerServiceWorker();
   
   //TODO: Timer to trigger map
 });
@@ -268,8 +268,7 @@ createReviewHTML = (review) => {
 }
 
 document.getElementById("btnSave").addEventListener("click", () => {
-  if ((document.getElementById("rname").value != "") || (document.getElementById("rcomments").value != "") || (document.getElementById("rrating").value != ""))
-  {
+  
     let newReview = {
       restaurant_id: self.restaurant.id,
       name: document.getElementById("rname").value,
@@ -281,9 +280,6 @@ document.getElementById("btnSave").addEventListener("click", () => {
     newArr.push(newReview);
     DBHelper.postReview(newReview).then(fillReviewsHTML(newArr,true));
     ;
-  } else {
-    alert("All fields are required");
-  }
   
 })
 
